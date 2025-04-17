@@ -11,7 +11,7 @@ from flask import render_template
 app = Flask(__name__)
 
 # Load and prepare data
-df = pd.read_csv('/Users/gopalverma/Desktop/Disease_symptom_and_patient_profile_dataset.csv')
+df = pd.read_csv('./Disease_symptom_and_patient_profile_dataset.csv')
 
 input_features = ['Disease', 'Fever', 'Cough', 'Fatigue', 'Difficulty Breathing',
                   'Age', 'Gender', 'Blood Pressure', 'Cholesterol Level']
