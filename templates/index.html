@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Outcome Predictor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #90e0ef;
+            --dark: #242423;
+            --light: #f8f9fa;
+            --gray: #adb5bd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #fff;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        .icon-input {
+            position: relative;
+        }
+        
+        .icon-input i {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px;
+            color: var(--gray);
+        }
+        
+        .icon-input select, .icon-input input {
+            padding-left: 45px;
+        }
+        
+        .btn-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(67, 97, 238, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(67, 97, 238, 0.15);
+        }
+        
+        .result-container {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-success {
+            background-color: rgba(76, 201, 240, 0.1);
+            border: 1px solid var(--success);
+        }
+        
+        .result-warning {
+            background-color: rgba(248, 150, 30, 0.1);
+            border: 1px solid var(--warning);
+        }
+        
+        .result-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            border: 1px solid var(--danger);
+        }
+        
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin: 2rem 0 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Disease Outcome Predictor</h1>
+            <p class="subtitle">Enter patient information to predict potential outcomes</p>
+        </header>
+        
+        <form id="prediction-form">
+            <h2 class="section-title">Disease Selection</h2>
+            <div class="form-container">
+                <div class="form-group icon-input">
+                    <label for="disease">Disease</label>
+                    <i class="fas fa-disease"></i>
+                    <select id="disease" name="Disease" required>
+                        <option value="" disabled selected>Select a disease</option>
+                        <option>Acne</option>
+                        <option>Allergic Rhinitis</option>
+                        <option>Alzheimer's Disease</option>
+                        <option>Anemia</option>
+                        <option>Anxiety Disorders</option>
+                        <option>Appendicitis</option>
+                        <option>Asthma</option>
+                        <option>Atherosclerosis</option>
+                        <option>Autism Spectrum Disorder (ASD)</option>
+                        <option>Bipolar Disorder</option>
+                        <option>Bladder Cancer</option>
+                        <option>Brain Tumor</option>
+                        <option>Breast Cancer</option>
+                        <option>Bronchitis</option>
+                        <option>Cataracts</option>
+                        <option>Cerebral Palsy</option>
+                        <option>Chickenpox</option>
+                        <option>Cholecystitis</option>
+                        <option>Cholera</option>
+                        <option>Chronic Kidney Disease</option>
+                        <option>Chronic Obstructive Pulmonary Disease (COPD)</option>
+                        <option>Cirrhosis</option>
+                        <option>Colorectal Cancer</option>
+                        <option>Common Cold</option>
+                        <option>Conjunctivitis (Pink Eye)</option>
+                        <option>Coronary Artery Disease</option>
+                        <option>Crohn's Disease</option>
+                        <option>Cystic Fibrosis</option>
+                        <option>Dementia</option>
+                        <option>Dengue Fever</option>
+                        <option>Depression</option>
+                        <option>Diabetes</option>
+                        <option>Diverticulitis</option>
+                        <option>Down Syndrome</option>
+                        <option>Eating Disorders (Anorexia, etc.)</option>
+                        <option>Ebola Virus</option>
+                        <option>Eczema</option>
+                        <option>Endometriosis</option>
+                        <option>Epilepsy</option>
+                        <option>Esophageal Cancer</option>
+                        <option>Fibromyalgia</option>
+                        <option>Gastroenteritis</option>
+                        <option>Glaucoma</option>
+                        <option>Gout</option>
+                        <option>HIV/AIDS</option>
+                        <option>Hemophilia</option>
+                        <option>Hemorrhoids</option>
+                        <option>Hepatitis</option>
+                        <option>Hepatitis B</option>
+                        <option>Hyperglycemia</option>
+                        <option>Hypertension</option>
+                        <option>Hypertensive Heart Disease</option>
+                        <option>Hyperthyroidism</option>
+                        <option>Hypoglycemia</option>
+                        <option>Hypothyroidism</option>
+                        <option>Influenza</option>
+                        <option>Kidney Cancer</option>
+                        <option>Kidney Disease</option>
+                        <option>Klinefelter Syndrome</option>
+                        <option>Liver Cancer</option>
+                        <option>Liver Disease</option>
+                        <option>Lung Cancer</option>
+                        <option>Lyme Disease</option>
+                        <option>Lymphoma</option>
+                        <option>Malaria</option>
+                        <option>Marfan Syndrome</option>
+                        <option>Measles</option>
+                        <option>Melanoma</option>
+                        <option>Migraine</option>
+                        <option>Multiple Sclerosis</option>
+                        <option>Mumps</option>
+                        <option>Muscular Dystrophy</option>
+                        <option>Myocardial Infarction (Heart Attack)</option>
+                        <option>Obsessive-Compulsive Disorder (OCD)</option>
+                        <option>Osteoarthritis</option>
+                        <option>Osteomyelitis</option>
+                        <option>Osteoporosis</option>
+                        <option>Otitis Media (Ear Infection)</option>
+                        <option>Ovarian Cancer</option>
+                        <option>Pancreatic Cancer</option>
+                        <option>Pancreatitis</option>
+                        <option>Parkinson's Disease</option>
+                        <option>Pneumocystis Pneumonia (PCP)</option>
+                        <option>Pneumonia</option>
+                        <option>Pneumothorax</option>
+                        <option>Polio</option>
+                        <option>Polycystic Ovary Syndrome (PCOS)</option>
+                        <option>Prader-Willi Syndrome</option>
+                        <option>Prostate Cancer</option>
+                        <option>Psoriasis</option>
+                        <option>Rabies</option>
+                        <option>Rheumatoid Arthritis</option>
+                        <option>Rubella</option>
+                        <option>Schizophrenia</option>
+                        <option>Scoliosis</option>
+                        <option>Sepsis</option>
+                        <option>Sickle Cell Anemia</option>
+                        <option>Sinusitis</option>
+                        <option>Sleep Apnea</option>
+                        <option>Spina Bifida</option>
+                        <option>Stroke</option>
+                        <option>Systemic Lupus Erythematosus (SLE)</option>
+                        <option>Testicular Cancer</option>
+                        <option>Tetanus</option>
+                        <option>Thyroid Cancer</option>
+                        <option>Tonsillitis</option>
+                        <option>Tourette Syndrome</option>
+                        <option>Tuberculosis</option>
+                        <option>Turner Syndrome</option>
+                        <option>Typhoid Fever</option>
+                        <option>Ulcerative Colitis</option>
+                        <option>Urinary Tract Infection</option>
+                        <option>Urinary Tract Infection (UTI)</option>
+                        <option>Williams Syndrome</option>
+                        <option>Zika Virus</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 class="section-title">Patient Symptoms</h2>
+            <div class="form-container">
+                <div class="form-group icon-input">
+                    <label for="fever">Fever</label>
+                    <i class="fas fa-thermometer-full"></i>
+                    <select id="fever" name="Fever" required>
+                        <option value="" disabled selected>Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="cough">Cough</label>
+                    <i class="fas fa-head-side-cough"></i>
+                    <select id="cough" name="Cough" required>
+                        <option value="" disabled selected>Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="fatigue">Fatigue</label>
+                    <i class="fas fa-bed"></i>
+                    <select id="fatigue" name="Fatigue" required>
+                        <option value="" disabled selected>Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="breathing">Difficulty Breathing</label>
+                    <i class="fas fa-lungs"></i>
+                    <select id="breathing" name="Difficulty Breathing" required>
+                        <option value="" disabled selected>Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 class="section-title">Patient Information</h2>
+            <div class="form-container">
+                <div class="form-group icon-input">
+                    <label for="age">Age</label>
+                    <i class="fas fa-birthday-cake"></i>
+                    <input type="number" id="age" name="Age" min="0" max="120" placeholder="Enter age" required>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="gender">Gender</label>
+                    <i class="fas fa-venus-mars"></i>
+                    <select id="gender" name="Gender" required>
+                        <option value="" disabled selected>Select gender</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="bp">Blood Pressure</label>
+                    <i class="fas fa-heartbeat"></i>
+                    <select id="bp" name="Blood Pressure" required>
+                        <option value="" disabled selected>Select level</option>
+                        <option>Low</option>
+                        <option>Normal</option>
+                        <option>High</option>
+                    </select>
+                </div>
+
+                <div class="form-group icon-input">
+                    <label for="cholesterol">Cholesterol Level</label>
+                    <i class="fas fa-tint"></i>
+                    <select id="cholesterol" name="Cholesterol Level" required>
+                        <option value="" disabled selected>Select level</option>
+                        <option>Low</option>
+                        <option>Normal</option>
+                        <option>High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-stethoscope"></i> Predict Outcome
+                </button>
+            </div>
+        </form>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>Processing prediction...</p>
+        </div>
+
+        <div id="result-container" class="result-container">
+            <h3 class="result-title">Prediction Results</h3>
+            <p id="result-text"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Show loader
+            document.getElementById('loader').style.display = 'block';
+            
+            // Hide any previous results
+            document.getElementById('result-container').style.display = 'none';
+            
+            // Collect form data
+            const formData = new FormData(this);
+            const json = Object.fromEntries(formData.entries());
+            
+            try {
+                // Send data to backend API
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(json)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const result = await response.json();
+                
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
+                
+                // Display result
+                const resultContainer = document.getElementById('result-container');
+                const resultText = document.getElementById('result-text');
+                
+                resultText.textContent = 'Predicted Outcome: ' + result.predicted_outcome;
+                
+                // Add appropriate styling based on outcome severity
+                resultContainer.className = 'result-container active';
+                
+                // Simple severity check (this could be enhanced based on actual outcomes)
+                const outcome = result.predicted_outcome.toLowerCase();
+                if (outcome.includes('mild') || outcome.includes('good') || outcome.includes('recovery')) {
+                    resultContainer.classList.add('result-success');
+                } else if (outcome.includes('moderate') || outcome.includes('uncertain')) {
+                    resultContainer.classList.add('result-warning');
+                } else if (outcome.includes('severe') || outcome.includes('critical')) {
+                    resultContainer.classList.add('result-danger');
+                } else {
+                    resultContainer.classList.add('result-warning');
+                }
+                
+                resultContainer.style.display = 'block';
+                
+                // Scroll to result
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
+                
+                // Display error message
+                const resultContainer = document.getElementById('result-container');
+                const resultText = document.getElementById('result-text');
+                
+                resultContainer.className = 'result-container active result-danger';
+                resultText.textContent = 'Error: Unable to process prediction. Please try again.';
+                resultContainer.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
